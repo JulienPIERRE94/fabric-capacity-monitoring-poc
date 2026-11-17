@@ -1,0 +1,46 @@
+// Ingestion contract: id:string, time:datetime, type:string, data:dynamic.
+// Run this QUALITY query first. Any nonzero invalid count requires investigation.
+CapacityOperationEvents
+| where ['time'] > ago(24h)
+| summarize Rows=count(),
+    MissingEventIds=countif(isempty(id)),
+    MissingCapacityIds=countif(isempty(tostring(data.capacityId))),
+    MissingOrInvalidCU=countif(isnull(todouble(data.capacityUnitMs))),
+    WrongEventTypes=countif(type != "Microsoft.Fabric.CapacityOperationEvents.Operation")
+
+// Run the entire analysis below as a separate query.
+// Set the IDs from 02-list-capacities.ps1. Do not use sample data as live evidence.
+let CapacityIds = dynamic(["<CAPACITY_1_ID>", "<CAPACITY_2_ID>"]);
+let Ops = materialize(
+    CapacityOperationEvents
+    | where ['time'] between (ago(24h) .. now())
+    | where type == "Microsoft.Fabric.CapacityOperationEvents.Operation"
+    | where isnotempty(id)
+    | summarize arg_max(['time'], *) by id
+    | extend CapacityId=tostring(data.capacityId),
+        WorkspaceId=tostring(data.workspaceId), ItemId=tostring(data.itemId),
+        OperationId=tostring(data.operationId), OperationName=tostring(data.operationName),
+        ItemKind=tostring(data.itemKind), UtilizationType=tostring(data.utilizationType),
+        Status=tostring(data.status), OperationStart=todatetime(data.operationStartTime),
+        CUms=todouble(data.capacityUnitMs), DurationMs=tolong(data.durationMs),
+        ThrottlingDelayMs=tolong(data.throttlingDelayMs)
+    | where CapacityId in (CapacityIds)
+);
+union
+    (Ops | summarize CUSeconds=sum(CUms)/1000.0, EventRecords=count(),
+        DelayMs=sum(ThrottlingDelayMs) by CapacityId
+        | extend Level="Capacity"),
+    (Ops | summarize CUSeconds=sum(CUms)/1000.0, EventRecords=count(),
+        DelayMs=sum(ThrottlingDelayMs) by CapacityId, WorkspaceId
+        | extend Level="Workspace"),
+    (Ops | summarize CUSeconds=sum(CUms)/1000.0, EventRecords=count(),
+        DelayMs=sum(ThrottlingDelayMs) by CapacityId, WorkspaceId, ItemId, ItemKind
+        | extend Level="Item"),
+    (Ops | summarize CUSeconds=sum(CUms)/1000.0, EventRecords=count(),
+        DelayMs=sum(ThrottlingDelayMs), MaxDurationMs=max(DurationMs)
+        by CapacityId, WorkspaceId, ItemId, OperationId, OperationName, UtilizationType, Status
+        | extend Level="Operation")
+| order by Level asc, CUSeconds desc
+// CU seconds here are totals over received records, NOT smoothed utilization %.
+// EventRecords is NOT a distinct operation count. Windows/late arrivals require validation.
+// Do not sum the four levels together: each is a different roll-up of the same records.

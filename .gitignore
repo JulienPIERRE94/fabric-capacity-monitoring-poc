@@ -1,0 +1,24 @@
+# Local configuration, credentials and operational data
+config.local.json
+collection.local.json
+.demo-state/
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.p12
+*.key
+*.cer
+*.crt
+*.log
+*.pbix
+*.zip
+*.msg
+*.docx
+*.pptx
+.azure/
+.venv/
+__pycache__/
+.vscode/
+**/.pbi/

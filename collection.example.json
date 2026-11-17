@@ -1,0 +1,21 @@
+{
+  "tenantId": "",
+  "regions": [
+    {
+      "region": "REGION-A",
+      "capacityId": "",
+      "database": {
+        "id": "",
+        "queryUri": "https://REPLACE.kusto.fabric.microsoft.com"
+      }
+    },
+    {
+      "region": "REGION-B",
+      "capacityId": "",
+      "database": {
+        "id": "",
+        "queryUri": "https://REPLACE.kusto.fabric.microsoft.com"
+      }
+    }
+  ]
+}

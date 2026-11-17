@@ -1,0 +1,11 @@
+{
+  "tenantId": "",
+  "clientId": "",
+  "subscriptionId": "",
+  "resourceGroup": "",
+  "fabricApiBaseUrl": "https://api.fabric.microsoft.com/v1",
+  "capacity1Id": "",
+  "capacity2Id": "",
+  "workspaceAdminUPN": "",
+  "workspaceAdminObjectId": ""
+}

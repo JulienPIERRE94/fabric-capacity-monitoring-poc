@@ -1,0 +1,20 @@
+name: Validate PowerShell POC
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run offline tests
+        shell: pwsh
+        run: |
+          ./tests/Test-FabricDemo.ps1
+          ./tests/Test-CapacityModel.ps1
+          ./tests/Test-CapacityReport.ps1
